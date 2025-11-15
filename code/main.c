@@ -18,7 +18,7 @@ typedef struct {
 
 // Car showcase state
 typedef struct {
-    CarData cars[3];
+    CarData cars[4];
     int current_car;
     float rotation_y;
     T3DViewport viewport;
@@ -77,8 +77,21 @@ void showcase_init() {
         }
     };
     
+    showcase.cars[3] = (CarData){
+        .name = "Lamborghini Diablo VT",
+        .model_path = "rom:/diablo.t3dm",
+        .specs = {
+            "Engine: 6.0L Naturally Aspirated V12",
+            "Power: 550 HP @ 7000 RPM",
+            "Torque: 580 Nm @ 5200 RPM",
+            "Weight: 1625 kg",
+            "Top Speed: 325 km/h",
+            "0-100: 4.0 seconds"
+        }
+    };
+    
     // Load car models
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         showcase.cars[i].model = t3d_model_load(showcase.cars[i].model_path);
         if (!showcase.cars[i].model) {
             debugf("ERROR: Failed to load model %s\n", showcase.cars[i].model_path);
@@ -106,15 +119,15 @@ void showcase_init() {
     // wav64_open(&showcase.music, "rom:/KickingInDoors.wav64");
     // wav64_play(&showcase.music, 0); // Channel 0
     
-    // Set up neutral overhead lighting
-    showcase.colorAmbient[0] = 80;   // R
-    showcase.colorAmbient[1] = 80;   // G  
-    showcase.colorAmbient[2] = 80;   // B - neutral ambient
+    // Set up brighter overhead lighting
+    showcase.colorAmbient[0] = 120;  // R - increased ambient
+    showcase.colorAmbient[1] = 120;  // G  
+    showcase.colorAmbient[2] = 120;  // B - brighter neutral ambient
     showcase.colorAmbient[3] = 0xFF; // A
     
-    showcase.colorDir[0] = 220;      // R
-    showcase.colorDir[1] = 220;      // G
-    showcase.colorDir[2] = 220;      // B - neutral white overhead light
+    showcase.colorDir[0] = 255;      // R - maximum directional light
+    showcase.colorDir[1] = 255;      // G
+    showcase.colorDir[2] = 255;      // B - bright white overhead light
     showcase.colorDir[3] = 0xFF;     // A
     
     // Overhead light direction (coming from above)
@@ -132,10 +145,10 @@ void showcase_update() {
     
     if (stick_cooldown == 0) {
         if (inputs.stick_x < -64) { // Left - previous car
-            showcase.current_car = (showcase.current_car - 1 + 3) % 3;
+            showcase.current_car = (showcase.current_car - 1 + 4) % 4;
             stick_cooldown = 15; // Prevent rapid switching
         } else if (inputs.stick_x > 64) { // Right - next car
-            showcase.current_car = (showcase.current_car + 1) % 3;
+            showcase.current_car = (showcase.current_car + 1) % 4;
             stick_cooldown = 15;
         }
     }
@@ -216,7 +229,7 @@ void showcase_cleanup() {
     // Stop and close music
     // wav64_close(&showcase.music);
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         if (showcase.cars[i].model) {
             t3d_model_free(showcase.cars[i].model);
         }
