@@ -42,6 +42,7 @@ assets_mp3_conv = $(addprefix filesystem/,$(notdir $(assets_mp3:%.mp3=%.wav64)))
 
 assets_wav = $(wildcard assets/*.wav)
 assets_wav_conv = $(addprefix filesystem/,$(notdir $(assets_wav:%.wav=%.wav64)))
+AUDIOCONV_FLAGS = --wav-compress 3
 
 filesystem/%.sprite: assets/%.png
 	@mkdir -p $(dir $@)

@@ -26,7 +26,7 @@ typedef struct {
     rdpq_font_t* font;
     
     // Audio
-    // wav64_t music;
+    wav64_t music;
     
     // Lighting
     uint8_t colorAmbient[4];
@@ -116,8 +116,8 @@ void showcase_init() {
     rdpq_text_register_font(10, showcase.font);
     
     // Load and start music
-    // wav64_open(&showcase.music, "rom:/KickingInDoors.wav64");
-    // wav64_play(&showcase.music, 0); // Channel 0
+    wav64_open(&showcase.music, "rom:/KickingInDoors.wav64");
+    wav64_play(&showcase.music, 0); // Channel 0
     
     // Set up brighter overhead lighting
     showcase.colorAmbient[0] = 120;  // R - increased ambient
@@ -247,8 +247,9 @@ int main() {
     asset_init_compression(2);
     dfs_init(DFS_DEFAULT_LOCATION);
     
-    // audio_init(48000, 2); 
-    // mixer_init(20);
+    audio_init(48000, 16);  // 48kHz, 16 buffers
+    mixer_init(16);        // 16 channels
+    wav64_init_compression(3);  // Opus compression
     
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE_ANTIALIAS);
     rdpq_init();
@@ -262,13 +263,7 @@ int main() {
     
     // Main loop
     while (1) {
-        // Handle audio mixing
-        // if (audio_can_write()) {
-        //     short *buf = audio_write_begin();
-        //     mixer_poll(buf, audio_get_buffer_length());
-        //     audio_write_end();
-        // }
-        // mixer_try_play();
+        mixer_try_play();
         
         showcase_update();
         showcase_render();
