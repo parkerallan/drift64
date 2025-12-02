@@ -32,6 +32,10 @@ typedef struct {
     uint8_t colorAmbient[4];
     uint8_t colorDir[4];
     T3DVec3 lightDirVec;
+    
+    // Arrow UI state
+    bool left_arrow_active;
+    bool right_arrow_active;
 } CarShowcase;
 
 CarShowcase showcase;
@@ -133,21 +137,91 @@ void showcase_init() {
     // Overhead light direction (coming from above)
     showcase.lightDirVec = (T3DVec3){{0.0f, -1.0f, -0.2f}};
     t3d_vec3_norm(&showcase.lightDirVec);
+    
+    // Initialize arrow states
+    showcase.left_arrow_active = false;
+    showcase.right_arrow_active = false;
+}
+
+void draw_left_arrow(float x, float y, float size, bool is_active) {
+    // Main arrow color
+    color_t arrow_color = is_active ? 
+        RGBA32(150, 255, 150, 255) :  // Bright glow green
+        RGBA32(0, 200, 0, 255);        // Normal green
+    
+    // Draw halo effect when active (larger, semi-transparent triangle behind)
+    if (is_active) {
+        color_t halo_color = RGBA32(100, 200, 100, 128); // Semi-transparent green halo
+        float halo_size = size * 1.4f;
+        float halo_offset = (halo_size - size) / 2.0f; // Center the halo
+        
+        rdpq_set_prim_color(halo_color);
+        
+        // Halo triangle arrowhead pointing left (centered on main arrow)
+        float halo_v1[] = { x - halo_offset, y };                           // Left point (tip)
+        float halo_v2[] = { x + size + halo_offset, y - halo_size * 0.6f }; // Top right
+        float halo_v3[] = { x + size + halo_offset, y + halo_size * 0.6f }; // Bottom right
+        rdpq_triangle(&TRIFMT_FILL, halo_v1, halo_v2, halo_v3);
+    }
+    
+    // Draw main arrow triangle
+    rdpq_set_prim_color(arrow_color);
+    
+    // Triangle arrowhead pointing left
+    float v1[] = { x, y };                       // Left point (tip)
+    float v2[] = { x + size, y - size * 0.6f };  // Top right
+    float v3[] = { x + size, y + size * 0.6f };  // Bottom right
+    rdpq_triangle(&TRIFMT_FILL, v1, v2, v3);
+}
+
+void draw_right_arrow(float x, float y, float size, bool is_active) {
+    // Main arrow color
+    color_t arrow_color = is_active ? 
+        RGBA32(150, 255, 150, 255) :  // Bright glow green
+        RGBA32(0, 200, 0, 255);        // Normal green
+    
+    // Draw halo effect when active (larger, semi-transparent triangle behind)
+    if (is_active) {
+        color_t halo_color = RGBA32(100, 200, 100, 128); // Semi-transparent green halo
+        float halo_size = size * 1.4f;
+        float halo_offset = (halo_size - size) / 2.0f; // Center the halo
+        
+        rdpq_set_prim_color(halo_color);
+        
+        // Halo triangle arrowhead pointing right (centered on main arrow)
+        float halo_v1[] = { x + size + halo_offset, y };                    // Right point (tip)
+        float halo_v2[] = { x - halo_offset, y - halo_size * 0.6f };        // Top left
+        float halo_v3[] = { x - halo_offset, y + halo_size * 0.6f };        // Bottom left
+        rdpq_triangle(&TRIFMT_FILL, halo_v1, halo_v2, halo_v3);
+    }
+    
+    // Draw main arrow triangle
+    rdpq_set_prim_color(arrow_color);
+    
+    // Triangle arrowhead pointing right
+    float v1[] = { x + size, y };                // Right point (tip)
+    float v2[] = { x, y - size * 0.6f };         // Top left
+    float v3[] = { x, y + size * 0.6f };         // Bottom left
+    rdpq_triangle(&TRIFMT_FILL, v1, v2, v3);
 }
 
 void showcase_update() {
     joypad_poll();
     joypad_inputs_t inputs = joypad_get_inputs(JOYPAD_PORT_1);
     
+    // Track arrow states for visual feedback
+    showcase.left_arrow_active = (inputs.stick_x < -64);
+    showcase.right_arrow_active = (inputs.stick_x > 64);
+    
     // Handle car switching with analog stick
     static int stick_cooldown = 0;
     if (stick_cooldown > 0) stick_cooldown--;
     
     if (stick_cooldown == 0) {
-        if (inputs.stick_x < -64) { // Left - previous car
+        if (showcase.left_arrow_active) { // Left - previous car
             showcase.current_car = (showcase.current_car - 1 + 4) % 4;
             stick_cooldown = 15; // Prevent rapid switching
-        } else if (inputs.stick_x > 64) { // Right - next car
+        } else if (showcase.right_arrow_active) { // Right - next car
             showcase.current_car = (showcase.current_car + 1) % 4;
             stick_cooldown = 15;
         }
@@ -198,6 +272,19 @@ void showcase_render() {
         t3d_matrix_pop(1);
     }
 
+    // Draw UI arrows
+    rdpq_sync_pipe();
+    rdpq_sync_tile();
+    rdpq_set_mode_standard();
+    rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
+    rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+    
+    // Left arrow (closer to left edge, vertically centered)
+    draw_left_arrow(10, 120, 18, showcase.left_arrow_active);
+    
+    // Right arrow (closer to right edge, vertically centered)
+    draw_right_arrow(292, 120, 18, showcase.right_arrow_active);
+    
     // Draw UI text - car specs in bottom left
     rdpq_sync_pipe();
     
@@ -221,6 +308,10 @@ void showcase_render() {
     // Controls hint
     rdpq_set_prim_color(RGBA32(0x66, 0x66, 0xFF, 0xFF));
     rdpq_text_printf(NULL, 10, 16, 16, "Analog Stick L/R: Switch Cars");
+    
+    // Debug: Show arrow state
+    // rdpq_set_prim_color(RGBA32(0xFF, 0xFF, 0x00, 0xFF));
+    // rdpq_text_printf(NULL, 10, 16, 28, "L:%d R:%d", showcase.left_arrow_active, showcase.right_arrow_active);
 
     rdpq_detach_show();
 }
