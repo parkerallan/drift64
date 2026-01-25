@@ -7,6 +7,15 @@ BUILD_DIR = build
 SRC_DIR = code
 
 SRC = $(SRC_DIR)/main.c
+SRC += $(SRC_DIR)/intro.c
+SRC += $(SRC_DIR)/select.c
+SRC += $(SRC_DIR)/track1.c
+SRC += $(SRC_DIR)/track2.c
+SRC += $(SRC_DIR)/track3.c
+SRC += $(SRC_DIR)/track4.c
+SRC += $(SRC_DIR)/track5.c
+SRC += $(SRC_DIR)/carmovement.c
+SRC += $(SRC_DIR)/carcamera.c
 #SRC += $(SRC_DIR)/example.c
 
 # Toolchain paths
